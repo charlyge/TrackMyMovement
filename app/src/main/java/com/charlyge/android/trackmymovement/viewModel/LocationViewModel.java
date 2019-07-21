@@ -20,7 +20,7 @@ public class LocationViewModel extends AndroidViewModel {
         appRepository = new AppRepository(application);
     }
 
-    public LiveData<List<MyLocations>> getBetcodesList() {
+    public LiveData<List<MyLocations>> getLocationList() {
        return appRepository.getAllCordinates();
     }
 }

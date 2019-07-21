@@ -1,7 +1,6 @@
 package com.charlyge.android.trackmymovement.Retrofit;
 
-import com.charlyge.android.trackmymovement.VolleyRequest.ApiResponseClass;
-import com.charlyge.android.trackmymovement.VolleyRequest.Rows;
+import com.charlyge.android.trackmymovement.NetworkModels.ApiResponseClass;
 
 import java.util.Map;
 

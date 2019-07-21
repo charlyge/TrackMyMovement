@@ -25,28 +25,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.charlyge.android.trackmymovement.Database.Entities.MyLocations;
 import com.charlyge.android.trackmymovement.Repository.AppRepository;
 import com.charlyge.android.trackmymovement.Retrofit.NetworkCallbacks;
 import com.charlyge.android.trackmymovement.Retrofit.NetworkService;
-import com.charlyge.android.trackmymovement.VolleyRequest.ApiResponseClass;
-import com.charlyge.android.trackmymovement.VolleyRequest.Rows;
-import com.charlyge.android.trackmymovement.VolleyRequest.VolleySingleton;
+import com.charlyge.android.trackmymovement.NetworkModels.ApiResponseClass;
 import com.charlyge.android.trackmymovement.viewModel.LocationViewModel;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -75,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private double latitude = 0;
     private String url = "";
     private AppRepository repository;
+    private TextView last_distance_covered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,20 +72,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         start_button = findViewById(R.id.start_button);
         mAndroidImageView = findViewById(R.id.imageView);
+         last_distance_covered =  findViewById(R.id.tv_last_distance_covered);
          distanceCovered = findViewById(R.id.tv_distance_covered);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
+        if (networkInfo == null) {
+            Toast.makeText(this, "Enable Your Gsm Network for accurate Result", Toast.LENGTH_SHORT).show();
+        }
         mRotateAnim = (AnimatorSet) AnimatorInflater.loadAnimator
                 (this, R.animator.rotate);
         mRotateAnim.setTarget(mAndroidImageView);
         repository = AppRepository.getInstance(this);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if(!IsGpsEnabled()){
-            return;
-        }
-        ViewModelProviders.of(this).get(LocationViewModel.class).getBetcodesList().observe(this, new Observer<List<MyLocations>>() {
+        ViewModelProviders.of(this).get(LocationViewModel.class).getLocationList().observe(this, new Observer<List<MyLocations>>() {
             @Override
             public void onChanged(List<MyLocations> myLocations) {
                 if(myLocations.size()>0){
-                    distanceCovered.setText(myLocations.get(0).getDisanceCovered());
+                   last_distance_covered.setText("Your last Distance covered is : " + myLocations.get(0).getDisanceCovered());
                 }
 
             }
@@ -107,9 +100,11 @@ public class MainActivity extends AppCompatActivity {
                 if (isTrackingEnabled) {
                     mRotateAnim.start();
                     startTracking();
+                    start_button.setBackgroundColor(getResources().getColor(R.color.red));
                     start_button.setText("Stop Tracking");
                 } else {
                     stopTracking();
+                    start_button.setBackgroundColor(getResources().getColor(R.color.green));
                     start_button.setText("Start Tracking");
                 }
             }
@@ -128,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                // distanceCovered.setText("distance covered is : " + distance);
             }
         };
+        IsGpsEnabled();
     }
 
     private void stopTracking() {
@@ -176,82 +172,50 @@ public class MainActivity extends AppCompatActivity {
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
     }
-//
-//    private void fetchDistance(){
-//        url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins="+latitudeStart +"," + longitudeStart + "&destinations="+ latitudeEnd + "," + latitudeEnd + " &key=AIzaSyANboowRlGj1S8UcwKQOdwJxcHHIaBDtzM";
-//        // Get a RequestQueue
-//        RequestQueue queue = VolleySingleton.getInstance(this.getApplicationContext()).
-//                getRequestQueue();
-//
-//        // Request a string response from the provided URL.
-//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new com.android.volley.Response.Listener<String>() {
-//            @Override
-//            public void onResponse(String response) {
-//
-//                Gson gson =new GsonBuilder().create();
-//                Rows rows = gson.fromJson(response, Rows.class);
-//                String distance = rows.getElements().get(0).getDistance().getText();
-//                   distanceCovered.setText(rows.getElements().get(0).getDistance().getText());
-//                MyLocations myLocations = new MyLocations(longitudeStart,latitudeStart,longitudeEnd,latitudeEnd,distance,new Date());
-//                   repository.insertDistance(myLocations);
-//            }
-//
-//        }, new com.android.volley.Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//
-//            }
-//
-//        });
-//
-//// ...
-//
-//// Add a request (in this example, called stringRequest) to your RequestQueue.
-//        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest);
-//    }
-
 
     private void fetchDistance() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
-        if (networkInfo != null) {
+        distanceCovered.setText("Fetching distance covered please wait.....");
             NetworkCallbacks networkCallbacks = NetworkService.getInstance().getNetworkCallbacks();
             Map<String, String> myParams = new HashMap<String, String>();
             myParams.put("origins", +latitudeStart + "," + longitudeStart);
             myParams.put("destinations", + latitudeEnd + "," + longitudeEnd);
-            myParams.put("key", "AIzaSyANboowRlGj1S8UcwKQOdwJxcHHIaBDtzM");
+            myParams.put("key", getResources().getString(R.string.ApiKey));
             Call<ApiResponseClass> call = networkCallbacks.getDistance("json", myParams);
             call.enqueue(new Callback<ApiResponseClass>() {
                 @Override
                 public void onResponse(Call<ApiResponseClass> call, Response<ApiResponseClass> response) {
-                    assert response.body() != null;
+                    if(response.body() == null){
+                        UseOfflineLocation();
+                        return;
+                    }
                     String distance = response.body().getRows().get(0).getElements().get(0).getDistance().getText();
                     MyLocations myLocations = new MyLocations(longitudeStart,latitudeStart,longitudeEnd,latitudeEnd,distance,new Date());
                     repository.insertDistance(myLocations);
-
+                    hasStartCordinatedInserted = false;
+                    distanceCovered.setText("You Covered " + distance);
                 }
 
-
-                /**
-                 * Fallback Just incase there is no internet to use Google Maps API
-                 */
                 @Override
                 public void onFailure(Call<ApiResponseClass> call, Throwable t) {
-                    Location crntLocation=new Location("crntLocation");
-                    crntLocation.setLatitude(latitudeStart);
-                    crntLocation.setLongitude(longitudeStart);
-
-                    Location newLocation=new Location("newlocation");
-                    newLocation.setLatitude(latitudeEnd);
-                    newLocation.setLongitude(longitudeEnd);
-                    float distance = crntLocation.distanceTo(newLocation) / 1000; // in km
-                    distanceCovered.setText("distance covered: " + distance);
-                    MyLocations myLocations = new MyLocations(longitudeStart,latitudeStart,longitudeEnd,latitudeEnd,String.valueOf(distance),new Date());
-                    repository.insertDistance(myLocations);
-
+                    UseOfflineLocation();
                 }
             });
-        }
+
+    }
+
+    private void UseOfflineLocation() {
+        Location crntLocation=new Location("crntLocation");
+        crntLocation.setLatitude(latitudeStart);
+        crntLocation.setLongitude(longitudeStart);
+
+        Location newLocation=new Location("newlocation");
+        newLocation.setLatitude(latitudeEnd);
+        newLocation.setLongitude(longitudeEnd);
+        float distance = crntLocation.distanceTo(newLocation) / 1000; // in km
+        distanceCovered.setText("distance covered: " + distance);
+        MyLocations myLocations = new MyLocations(longitudeStart,latitudeStart,longitudeEnd,latitudeEnd,String.valueOf(distance),new Date());
+        repository.insertDistance(myLocations);
+        hasStartCordinatedInserted = false;
     }
 
     public boolean IsGpsEnabled() {

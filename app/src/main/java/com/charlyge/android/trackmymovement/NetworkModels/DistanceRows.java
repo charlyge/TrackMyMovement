@@ -1,4 +1,4 @@
-package com.charlyge.android.trackmymovement.VolleyRequest;
+package com.charlyge.android.trackmymovement.NetworkModels;
 
 import java.util.List;
 

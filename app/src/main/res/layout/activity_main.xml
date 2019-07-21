@@ -16,27 +16,38 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_margin="20dp"
-        android:src="@mipmap/ic_launcher" />
+        android:src="@drawable/ic_location" />
     <TextView
-        android:id="@+id/tv_distance_covered"
+        android:id="@+id/tv_last_distance_covered"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_margin="20dp"
         android:textColor="@android:color/holo_red_light"
-        android:text="Hello World!"
+        tools:text="Hello World!"
+        />
+
+    <TextView
+        android:id="@+id/tv_distance_covered"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:fontFamily="sans-serif-medium"
+        android:layout_margin="20dp"
+        android:textColor="@android:color/holo_red_light"
+        tools:text="Hello World!"
         />
 
     <Button
         android:id="@+id/start_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:text="Start Tracking"
+        android:text="Start Tracking"
         android:textColor="#fff"
         android:layout_margin="20dp"
         android:padding="5dp"
         android:layout_gravity="center"
-        android:background="#4CAF50"
+        android:background="@color/green"
        />
 
 </LinearLayout>
