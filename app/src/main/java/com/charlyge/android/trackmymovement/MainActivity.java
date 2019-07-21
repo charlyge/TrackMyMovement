@@ -204,15 +204,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void UseOfflineLocation() {
-        Location crntLocation=new Location("crntLocation");
+        Location crntLocation=new Location(LocationManager.GPS_PROVIDER);
         crntLocation.setLatitude(latitudeStart);
         crntLocation.setLongitude(longitudeStart);
 
-        Location newLocation=new Location("newlocation");
+        Location newLocation=new Location(LocationManager.GPS_PROVIDER);
         newLocation.setLatitude(latitudeEnd);
         newLocation.setLongitude(longitudeEnd);
-        float distance = crntLocation.distanceTo(newLocation) / 1000; // in km
-        distanceCovered.setText("distance covered: " + distance);
+        float distance = crntLocation.distanceTo(newLocation) / 100; // in km
+        distanceCovered.setText("distance covered: " + distance + "m");
         MyLocations myLocations = new MyLocations(longitudeStart,latitudeStart,longitudeEnd,latitudeEnd,String.valueOf(distance),new Date());
         repository.insertDistance(myLocations);
         hasStartCordinatedInserted = false;
